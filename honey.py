@@ -12,40 +12,12 @@ import time
 from cryptography.hazmat.primitives import serialization, hashes
 from cryptography.hazmat.primitives.asymmetric import padding
 from cryptography.hazmat.backends import default_backend
+import streamlit as st
 
 # [추가할 부분] 키 설정 및 인증 함수
 
-# 여기에 형님의 ID와 긴 키를 넣으세요!
-KALSHI_KEY_ID = "b40dbd64-76b7-4420-8a35-aff04fa56900"
-KALSHI_PRIVATE_KEY = """
------BEGIN RSA PRIVATE KEY-----
-MIIEowIBAAKCAQEAylbXiNkWLXb+bZnnXQehF0nr2t8Hkgsfa29zmOTsbXy3068r
-Xc6AhWZgXD0494IBEaGniM60tWzRzwgIss9z+FkUVPHnffuCuqdqLtB+ywuWoxve
-14q6YwcaQKcyZxF997LotA3VYwbnJQWms4w9BqdDO8wbx1yo3+mElb4FU7AjvJIM
-dssVSw1b4+X+/rQTOGEn6tYodNUgUCRLHtKWBQObLN5WAWVFtlqfPHcuMahezolP
-sNLV66P1NvInTyz5aHGyuh1Ab8XP9irkz6YANW04hCy9dZFI1cbOpcOv8se+O8XE
-CtW3FvXvUW5ZzxEmppWvjSjyRF4eEUJqIybgkwIDAQABAoIBAAewbidmrIeUxo1u
-tFKeOBp09jAOmrCLmKmSBjAQvwVYIHo8ZWb+snafUdkfgHszZwv++ylhRY/Bb2Wx
-Nfdpl8wfwnyJ5tSsSqcCNrBJvw/DRHm1VO4W+QdLXU2IrQsqqIFRvLMe9XV6bS1E
-fjXDhgwrLgxnMMUOOeKscpvoKTapYRA2jnxQPgc0naeAGfZFRehdLYGckhDeAEQ2
-0pNOz6To0l0mcn77NpvxAy3gMpAyB/6iInNab48uv6Td2c/zUawaqjnPvLxzPonT
-WwjZesJaX55ecp4wk8G1VY7RxGbDr25wIiRh7hmL4ZYJkS0CDuyJqIgVis1RAJfJ
-K+BRiYUCgYEA9kSaDCOgUVA/AFsjZwb0kpStN1K6tf4ezvhOjjsck7d0P7r/pAqW
-xO+xfRKYIUQUvwNBLfhEbnLG3jLTfB6qinc6pGKyXeSzdRUeT8ZloPhLjloxslJP
-2JKvmEpp9EJn+y0EPOpmHLCKsIeA3rycT7w0piFkkI6ZuXIAcOFT7V8CgYEA0lXU
-d3j4d0B7unMLhwU9qN4ulRSueIjmNFWDUkhAeQ4J9VNB+dJy2xzw3m+gnImaY4q3
-Soew5kCN2y4cPBfgrgMeC0KbMQ5WWicCUUaq2hc9UXtvdIkMtmMm6XQkGuvUW5YS
-uWPBocCEUAO7TAmkzF6gc5Qn/1qcrH6YMsT+ZU0CgYAgKIktOKHAvIfdlgkjdQcO
-9RdBeC4lgc+oG0i2zgVHTNeDUvn7A974TIyS1pDDF07WOqiSRi85dQd/EIgJVz/R
-4QvpV3IPTMQab+2LYU74HDRRnHmM3a7Liywe6Oi5GsrVQ+WfxsQazvrtXmR3sY1/
-5AXEA+xL7DMqwjZIh0QcZQKBgQCw+GBUyWacx5eSz5tCVmmDvLUK4CTP67dtDwn3
-4CzG7cX5ML0RGj1jGF2deeRz8N8Co8MGJVb01BnG8Wv2L8zt/Fd59+elhb+oCKxN
-gBzedLE17ppfPbSBfLlPsVVzhTreeE12yHUxyE5LGGitWGvdPDzaIizpD+9EvxsF
-lHPK/QKBgHyBNN3sIvIt/xw/gEIpTwOD5VXVwwY9259vh6/tAL5h4bMs1vB11jAm
-9MzU3z81/QhfNTZNSHjp4fLRv3HetMDdKbONsU7C1v1okd0bCA+7hGMNKxD2cZIi
-LuCFcuaFaix8I2f95xdQ/tT0uUWf6EJ1ANvXr8imMZU9aRSW2xBW
------END RSA PRIVATE KEY-----
-"""
+KALSHI_KEY_ID = st.secrets["KALSHI_KEY_ID"]
+KALSHI_PRIVATE_KEY = st.secrets["KALSHI_PRIVATE_KEY"]
 
 def get_kalshi_auth_headers(method: str, path: str):
     """Kalshi V2 API 인증 헤더 생성"""
@@ -1010,3 +982,4 @@ elif active == "Arbitrage":
              st.warning(f"🔍 양쪽 마켓을 다 뒤졌으나 설정한 유사도({sim_th})와 갭({spread_th}%)에 맞는 짝을 찾지 못했습니다.\n\n👉 유사도를 낮추거나(0.5 정도), 마감 기한을 늘려보세요.")
         else:
              st.info("👈 왼쪽 사이드바에서 '⚡ 아비트라지 찾기' 버튼을 눌러보세요.")
+
