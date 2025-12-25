@@ -84,6 +84,22 @@ if "scan_target" not in st.session_state:
 
 
 # ============== 공통 유틸 ==============
+# [추가] 번역 라이브러리 설정
+try:
+    from deep_translator import GoogleTranslator
+    HAS_TRANSLATOR = True
+except ImportError:
+    HAS_TRANSLATOR = False
+
+# [추가] 번역 함수
+def translate_text(text: str) -> str:
+    if not HAS_TRANSLATOR or not text: return ""
+    try:
+        # 너무 길면 자르고 번역 (속도 위해)
+        return GoogleTranslator(source="auto", target="ko").translate(text[:300])
+    except:
+        return ""
+
 def build_session():
     s = requests.Session()
     s.mount(
@@ -149,14 +165,15 @@ def normalize_text(s: str) -> str:
 # 👇 여기서부터 복사해서 normalize_text 함수 바로 밑에 붙여넣으세요 👇
 # ================================================================
 
-# 1. [복구] 카드 디자인 함수 (make_card_html 에러 해결)
+# [수정] 카드 디자인 (한국어 제목 우선 표시 기능 추가)
 def make_card_html(item, platform):
     bet_text = str(item.get("bet", "YES")).upper()
     color = "#00C853" if "YES" in bet_text else "#D32F2F"
-    
     img_html = f'<img src="{item.get("image","")}" style="width:100%;height:100%;object-fit:cover;">'
 
-    # HTML 템플릿
+    # [핵심] 한국어 번역이 있으면 그거 쓰고, 없으면 영어 원문 사용
+    title_text = item.get("q_kr") if item.get("q_kr") else item.get("q", "")
+
     html = f"""
     <div style="border:1px solid #ddd; border-radius:10px; overflow:hidden; margin-bottom:15px; background:white; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
         <div style="height:140px; background:#eee; position:relative;">
@@ -164,7 +181,7 @@ def make_card_html(item, platform):
             <div style="position:absolute; top:8px; right:8px; background:rgba(0,0,0,0.7); color:white; padding:2px 8px; font-size:11px; border-radius:4px;">{item.get('sector','GEN')}</div>
         </div>
         <div style="padding:15px;">
-            <div style="height:45px; overflow:hidden; font-weight:bold; font-size:15px; line-height:1.4; margin-bottom:8px;">{item.get('q','')}</div>
+            <div style="height:55px; overflow:hidden; font-weight:bold; font-size:15px; line-height:1.4; margin-bottom:8px;">{title_text}</div>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                 <span style="background:{color}; color:white; padding:4px 12px; border-radius:15px; font-weight:bold; font-size:12px;">{bet_text}</span>
                 <span style="font-size:24px; font-weight:900; color:#2E7D32;">{item.get('prob',0)}%</span>
@@ -430,6 +447,18 @@ def scan_polymarket(scan_limit, min_vol_usd, hours_cfg, min_p, max_p, progress_b
     
     dedup = list({i["q"]: i for i in temp}.values())
 
+    # [추가] 번역 실행 로직 (dedup이 완성된 직후에 실행)
+    if HAS_TRANSLATOR and dedup:
+        if progress_bar: progress_bar.progress(0.9, text="한국어로 번역 중... (잠시만요!)")
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as exc:
+            # 영어 제목(q)을 한국어(q_kr)로 번역
+            fq = {exc.submit(translate_text, i["q"]): i for i in dedup}
+            for f in concurrent.futures.as_completed(fq):
+                try:
+                    # 결과물에 'q_kr' 항목 추가
+                    fq[f]["q_kr"] = f.result()
+                except: pass
+
     if HAS_TRANSLATOR and dedup:
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as exc:
             fq = {exc.submit(translate_text, i["q"]): i for i in dedup}
@@ -634,6 +663,18 @@ def scan_kalshi(scan_limit, min_contracts, hours_cfg, min_p, max_p, progress_bar
             if r := f.result(): temp.append(r)
             
     dedup = list({i["link"]: i for i in temp}.values())
+
+    # [추가] 번역 실행 로직 (dedup이 완성된 직후에 실행)
+    if HAS_TRANSLATOR and dedup:
+        if progress_bar: progress_bar.progress(0.9, text="한국어로 번역 중... (잠시만요!)")
+        with concurrent.futures.ThreadPoolExecutor(max_workers=20) as exc:
+            # 영어 제목(q)을 한국어(q_kr)로 번역
+            fq = {exc.submit(translate_text, i["q"]): i for i in dedup}
+            for f in concurrent.futures.as_completed(fq):
+                try:
+                    # 결과물에 'q_kr' 항목 추가
+                    fq[f]["q_kr"] = f.result()
+                except: pass
     
     if HAS_TRANSLATOR and dedup:
         with concurrent.futures.ThreadPoolExecutor(max_workers=20) as exc:
@@ -982,4 +1023,5 @@ elif active == "Arbitrage":
              st.warning(f"🔍 양쪽 마켓을 다 뒤졌으나 설정한 유사도({sim_th})와 갭({spread_th}%)에 맞는 짝을 찾지 못했습니다.\n\n👉 유사도를 낮추거나(0.5 정도), 마감 기한을 늘려보세요.")
         else:
              st.info("👈 왼쪽 사이드바에서 '⚡ 아비트라지 찾기' 버튼을 눌러보세요.")
+
 
